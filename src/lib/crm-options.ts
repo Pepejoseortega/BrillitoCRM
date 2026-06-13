@@ -40,11 +40,8 @@ export const LEAD_STATUSES = [
   "Descartado",
 ];
 
-// Nombres de los agentes que atienden (columna 11).
-// TODO: reemplazar con la lista real de agentes.
-export const AGENTS: string[] = [
-  "Sin asignar",
-];
+// Nota: los agentes (columna 11) NO son una lista fija: se obtienen de los
+// usuarios del sistema vía GET /api/agents.
 
 // Colores para el estado del lead (para los badges en la UI)
 export const STATUS_COLORS: Record<string, string> = {

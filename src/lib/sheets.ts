@@ -48,6 +48,14 @@ function fmtDate(d?: Date | string | null) {
   return date.toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" });
 }
 
+// Obtiene el nombre de la primera pestaña de la hoja (para no depender de
+// que se llame "Hoja 1" o "Sheet1"). Se puede forzar con GOOGLE_SHEET_TAB.
+async function resolveTabName(sheets: any, spreadsheetId: string) {
+  if (process.env.GOOGLE_SHEET_TAB) return process.env.GOOGLE_SHEET_TAB;
+  const meta = await sheets.spreadsheets.get({ spreadsheetId, fields: "sheets.properties.title" });
+  return meta.data.sheets?.[0]?.properties?.title || "Hoja 1";
+}
+
 // Agrega una fila al final de la hoja con el orden exacto de las 11 columnas.
 export async function appendContactToSheet(c: ContactRow) {
   const auth = getAuth();
@@ -56,8 +64,8 @@ export async function appendContactToSheet(c: ContactRow) {
     console.warn("[sheets] No configurado, se omite el envío a Google Sheets.");
     return;
   }
-  const tab = process.env.GOOGLE_SHEET_TAB || "Hoja 1";
   const sheets = google.sheets({ version: "v4", auth });
+  const tab = await resolveTabName(sheets, spreadsheetId);
 
   const row = [
     fmtDate(c.firstContactDate),   // Col 1

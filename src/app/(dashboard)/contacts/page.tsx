@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BABY_STAGES, BUDGETS, NO_BUY_REASONS, LEAD_STATUSES, AGENTS, STATUS_COLORS } from "@/lib/crm-options";
+import { BABY_STAGES, BUDGETS, NO_BUY_REASONS, LEAD_STATUSES, STATUS_COLORS } from "@/lib/crm-options";
 
 type Contact = {
   id: string;
@@ -34,6 +34,7 @@ const emptyForm = () => ({
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [agents, setAgents] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm());
@@ -41,6 +42,7 @@ export default function ContactsPage() {
 
   useEffect(() => {
     fetch("/api/contacts").then((r) => r.json()).then(setContacts);
+    fetch("/api/agents").then((r) => r.json()).then(setAgents);
   }, []);
 
   const filtered = contacts.filter(
@@ -139,7 +141,7 @@ export default function ContactsPage() {
             <label className={label}>Agente que atiende</label>
             <select value={form.agent} onChange={(e) => setForm({ ...form, agent: e.target.value })} className={field}>
               <option value="">— Selecciona —</option>
-              {AGENTS.map((o) => <option key={o} value={o}>{o}</option>)}
+              {agents.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div className="col-span-2">

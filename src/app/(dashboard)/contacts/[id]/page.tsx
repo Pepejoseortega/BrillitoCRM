@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { BABY_STAGES, BUDGETS, NO_BUY_REASONS, LEAD_STATUSES, AGENTS, STATUS_COLORS } from "@/lib/crm-options";
+import { BABY_STAGES, BUDGETS, NO_BUY_REASONS, LEAD_STATUSES, STATUS_COLORS } from "@/lib/crm-options";
 
 type Task = { id: string; title: string; done: boolean; dueDate?: string; description?: string };
 type Contact = {
@@ -28,12 +28,14 @@ const dateLabel = (d?: string) => (d ? new Date(d).toLocaleDateString("es-MX") :
 export default function ContactDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [contact, setContact] = useState<Contact | null>(null);
+  const [agents, setAgents] = useState<string[]>([]);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<any>({});
   const [taskForm, setTaskForm] = useState({ title: "", description: "", dueDate: "" });
   const [addingTask, setAddingTask] = useState(false);
 
   useEffect(() => {
+    fetch("/api/agents").then((r) => r.json()).then(setAgents);
     fetch(`/api/contacts/${id}`).then((r) => r.json()).then((data) => {
       setContact(data);
       setForm({
@@ -124,7 +126,7 @@ export default function ContactDetailPage() {
             <div className="col-span-2"><label className={lbl}>Pregunta principal</label><input value={form.mainQuestion ?? ""} onChange={(e) => setForm({ ...form, mainQuestion: e.target.value })} className={field} /></div>
             <div><label className={lbl}>Estado del lead</label><select value={form.status ?? "Nuevo"} onChange={(e) => setForm({ ...form, status: e.target.value })} className={field}>{LEAD_STATUSES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
             <div><label className={lbl}>Próximo seguimiento</label><input type="date" value={form.nextFollowUp ?? ""} onChange={(e) => setForm({ ...form, nextFollowUp: e.target.value })} className={field} /></div>
-            <div><label className={lbl}>Agente que atiende</label>{sel("agent", AGENTS)}</div>
+            <div><label className={lbl}>Agente que atiende</label>{sel("agent", agents)}</div>
             <div className="col-span-2"><label className={lbl}>Observaciones del agente</label><textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} className={field} /></div>
             <div className="col-span-2 flex justify-end gap-2">
               <button onClick={() => setEditing(false)} className="px-4 py-2 text-sm text-gray-500">Cancelar</button>
