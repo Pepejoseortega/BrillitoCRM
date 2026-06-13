@@ -24,7 +24,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   const { id } = await params;
-  const data = await req.json();
+  const raw = await req.json();
+  const data: any = { ...raw };
+  // No permitir sobrescribir relaciones / ids
+  delete data.id; delete data.userId; delete data.tasks; delete data._count;
+  delete data.createdAt; delete data.updatedAt;
+  if (data.firstContactDate) data.firstContactDate = new Date(data.firstContactDate);
+  if ("nextFollowUp" in data) data.nextFollowUp = data.nextFollowUp ? new Date(data.nextFollowUp) : null;
   const contact = await prisma.contact.updateMany({
     where: { id, userId },
     data,

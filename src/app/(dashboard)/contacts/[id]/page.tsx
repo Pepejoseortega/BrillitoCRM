@@ -1,32 +1,46 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
+import { BABY_STAGES, BUDGETS, NO_BUY_REASONS, LEAD_STATUSES, AGENTS, STATUS_COLORS } from "@/lib/crm-options";
 
 type Task = { id: string; title: string; done: boolean; dueDate?: string; description?: string };
-type Contact = { id: string; name: string; email?: string; phone?: string; company?: string; status: string; notes?: string; tasks: Task[] };
+type Contact = {
+  id: string;
+  name: string;
+  whatsapp?: string;
+  firstContactDate?: string;
+  babyStage?: string;
+  budget?: string;
+  mainQuestion?: string;
+  noBuyReason?: string;
+  status: string;
+  nextFollowUp?: string;
+  notes?: string;
+  agent?: string;
+  tasks: Task[];
+};
 
-const STATUS_OPTIONS = [
-  { value: "lead", label: "Lead" },
-  { value: "prospect", label: "Prospecto" },
-  { value: "customer", label: "Cliente" },
-  { value: "inactive", label: "Inactivo" },
-];
+const dateInput = (d?: string) => (d ? new Date(d).toISOString().slice(0, 10) : "");
+const dateLabel = (d?: string) => (d ? new Date(d).toLocaleDateString("es-MX") : "—");
 
 export default function ContactDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const [contact, setContact] = useState<Contact | null>(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState<Partial<Contact>>({});
+  const [form, setForm] = useState<any>({});
   const [taskForm, setTaskForm] = useState({ title: "", description: "", dueDate: "" });
   const [addingTask, setAddingTask] = useState(false);
 
   useEffect(() => {
     fetch(`/api/contacts/${id}`).then((r) => r.json()).then((data) => {
       setContact(data);
-      setForm(data);
+      setForm({
+        ...data,
+        firstContactDate: dateInput(data.firstContactDate),
+        nextFollowUp: dateInput(data.nextFollowUp),
+      });
     });
   }, [id]);
 
@@ -46,10 +60,7 @@ export default function ContactDetailPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ done: !task.done }),
     });
-    setContact({
-      ...contact!,
-      tasks: contact!.tasks.map((t) => t.id === task.id ? { ...t, done: !t.done } : t),
-    });
+    setContact({ ...contact!, tasks: contact!.tasks.map((t) => t.id === task.id ? { ...t, done: !t.done } : t) });
   }
 
   async function addTask(e: React.FormEvent) {
@@ -72,8 +83,18 @@ export default function ContactDetailPage() {
 
   if (!contact) return <div className="text-gray-400 py-20 text-center">Cargando...</div>;
 
+  const field = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400";
+  const lbl = "block text-xs text-gray-500 mb-1";
+
+  const sel = (key: string, opts: string[]) => (
+    <select value={form[key] ?? ""} onChange={(e) => setForm({ ...form, [key]: e.target.value })} className={field}>
+      <option value="">— Selecciona —</option>
+      {opts.map((o) => <option key={o} value={o}>{o}</option>)}
+    </select>
+  );
+
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       <Link href="/contacts" className="text-sm text-blue-600 hover:underline mb-4 block">← Volver a contactos</Link>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
@@ -84,7 +105,7 @@ export default function ContactDetailPage() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-800">{contact.name}</h1>
-              <p className="text-sm text-gray-400">{contact.company}</p>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[contact.status] || "bg-gray-100 text-gray-600"}`}>{contact.status}</span>
             </div>
           </div>
           <button onClick={() => setEditing(!editing)} className="text-sm text-blue-600 hover:underline">
@@ -94,55 +115,48 @@ export default function ContactDetailPage() {
 
         {editing ? (
           <div className="grid grid-cols-2 gap-3">
-            {(["name", "email", "phone", "company"] as const).map((f) => (
-              <div key={f}>
-                <label className="block text-xs text-gray-500 mb-1 capitalize">{f === "phone" ? "Teléfono" : f === "company" ? "Empresa" : f}</label>
-                <input value={(form as any)[f] ?? ""} onChange={(e) => setForm({ ...form, [f]: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
-              </div>
-            ))}
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">Estado</label>
-              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
-                {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
-            </div>
-            <div className="col-span-2">
-              <label className="block text-xs text-gray-500 mb-1">Notas</label>
-              <textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
-            </div>
+            <div><label className={lbl}>Fecha de primer contacto</label><input type="date" value={form.firstContactDate ?? ""} onChange={(e) => setForm({ ...form, firstContactDate: e.target.value })} className={field} /></div>
+            <div><label className={lbl}>Nombre completo</label><input value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} className={field} /></div>
+            <div><label className={lbl}>WhatsApp</label><input value={form.whatsapp ?? ""} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} className={field} /></div>
+            <div><label className={lbl}>Edad del bebé o estado</label>{sel("babyStage", BABY_STAGES)}</div>
+            <div><label className={lbl}>Presupuesto</label>{sel("budget", BUDGETS)}</div>
+            <div><label className={lbl}>Razón de no compra</label>{sel("noBuyReason", NO_BUY_REASONS)}</div>
+            <div className="col-span-2"><label className={lbl}>Pregunta principal</label><input value={form.mainQuestion ?? ""} onChange={(e) => setForm({ ...form, mainQuestion: e.target.value })} className={field} /></div>
+            <div><label className={lbl}>Estado del lead</label><select value={form.status ?? "Nuevo"} onChange={(e) => setForm({ ...form, status: e.target.value })} className={field}>{LEAD_STATUSES.map((o) => <option key={o} value={o}>{o}</option>)}</select></div>
+            <div><label className={lbl}>Próximo seguimiento</label><input type="date" value={form.nextFollowUp ?? ""} onChange={(e) => setForm({ ...form, nextFollowUp: e.target.value })} className={field} /></div>
+            <div><label className={lbl}>Agente que atiende</label>{sel("agent", AGENTS)}</div>
+            <div className="col-span-2"><label className={lbl}>Observaciones del agente</label><textarea value={form.notes ?? ""} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} className={field} /></div>
             <div className="col-span-2 flex justify-end gap-2">
               <button onClick={() => setEditing(false)} className="px-4 py-2 text-sm text-gray-500">Cancelar</button>
               <button onClick={saveContact} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">Guardar</button>
             </div>
           </div>
         ) : (
-          <dl className="grid grid-cols-2 gap-2 text-sm">
-            <div><dt className="text-gray-400 text-xs">Email</dt><dd className="text-gray-700">{contact.email || "—"}</dd></div>
-            <div><dt className="text-gray-400 text-xs">Teléfono</dt><dd className="text-gray-700">{contact.phone || "—"}</dd></div>
-            <div><dt className="text-gray-400 text-xs">Empresa</dt><dd className="text-gray-700">{contact.company || "—"}</dd></div>
-            <div><dt className="text-gray-400 text-xs">Estado</dt><dd className="text-gray-700">{STATUS_OPTIONS.find(o => o.value === contact.status)?.label}</dd></div>
-            {contact.notes && <div className="col-span-2"><dt className="text-gray-400 text-xs">Notas</dt><dd className="text-gray-700">{contact.notes}</dd></div>}
+          <dl className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+            <Info label="Primer contacto" value={dateLabel(contact.firstContactDate)} />
+            <Info label="WhatsApp" value={contact.whatsapp} />
+            <Info label="Edad del bebé / estado" value={contact.babyStage} />
+            <Info label="Presupuesto" value={contact.budget} />
+            <Info label="Pregunta principal" value={contact.mainQuestion} span />
+            <Info label="Razón de no compra" value={contact.noBuyReason} />
+            <Info label="Próximo seguimiento" value={dateLabel(contact.nextFollowUp)} />
+            <Info label="Agente" value={contact.agent} />
+            <Info label="Observaciones" value={contact.notes} span />
           </dl>
         )}
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-gray-800">Tareas ({contact.tasks.length})</h2>
+          <h2 className="font-semibold text-gray-800">Seguimientos / Tareas ({contact.tasks.length})</h2>
           <button onClick={() => setAddingTask(!addingTask)} className="text-sm text-blue-600 hover:underline">+ Nueva tarea</button>
         </div>
 
         {addingTask && (
           <form onSubmit={addTask} className="border border-gray-100 rounded-xl p-4 mb-4 space-y-2 bg-gray-50">
-            <input required value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
-              placeholder="Título de la tarea" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
-            <input value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
-              placeholder="Descripción (opcional)" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
-            <input type="date" value={taskForm.dueDate} onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            <input required value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} placeholder="Título de la tarea" className={field} />
+            <input value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} placeholder="Descripción (opcional)" className={field} />
+            <input type="date" value={taskForm.dueDate} onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })} className={field} />
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setAddingTask(false)} className="text-sm text-gray-400">Cancelar</button>
               <button type="submit" className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-blue-700">Agregar</button>
@@ -158,13 +172,22 @@ export default function ContactDetailPage() {
               <div className="flex-1">
                 <p className={`text-sm font-medium ${t.done ? "line-through text-gray-400" : "text-gray-700"}`}>{t.title}</p>
                 {t.description && <p className="text-xs text-gray-400">{t.description}</p>}
-                {t.dueDate && <p className="text-xs text-gray-400 mt-0.5">📅 {new Date(t.dueDate).toLocaleDateString("es-ES")}</p>}
+                {t.dueDate && <p className="text-xs text-gray-400 mt-0.5">📅 {new Date(t.dueDate).toLocaleDateString("es-MX")}</p>}
               </div>
               <button onClick={() => deleteTask(t.id)} className="text-xs text-red-400 hover:text-red-600">✕</button>
             </div>
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function Info({ label, value, span }: { label: string; value?: string; span?: boolean }) {
+  return (
+    <div className={span ? "col-span-2" : ""}>
+      <dt className="text-gray-400 text-xs">{label}</dt>
+      <dd className="text-gray-700">{value || "—"}</dd>
     </div>
   );
 }

@@ -57,18 +57,25 @@ model VerificationToken {
 }
 
 model Contact {
-  id        String   @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  company   String?
-  notes     String?
-  status    String   @default("lead")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tasks     Task[]
+  id                String    @id @default(cuid())
+  name              String
+  email             String?
+  // --- Campos del CRM de productos para bebé (layout Google Sheets) ---
+  firstContactDate  DateTime  @default(now()) // Col 1: Fecha de primer contacto
+  whatsapp          String?                    // Col 3: Número de WhatsApp
+  babyStage         String?                    // Col 4: Edad del bebé o estado
+  budget            String?                    // Col 5: Presupuesto aproximado
+  mainQuestion      String?                    // Col 6: Pregunta principal del cliente
+  noBuyReason       String?                    // Col 7: Razón de no compra
+  status            String    @default("Nuevo")// Col 8: Estado del lead
+  nextFollowUp      DateTime?                  // Col 9: Fecha del próximo seguimiento
+  notes             String?                    // Col 10: Observaciones del agente
+  agent             String?                    // Col 11: Nombre del agente que atiende
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks             Task[]
 }
 
 model Task {
