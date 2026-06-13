@@ -8,17 +8,19 @@ async function getUserId() {
   return (session?.user as any)?.id as string | undefined;
 }
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const { id } = await params;
   const data = await req.json();
-  await prisma.task.updateMany({ where: { id: params.id, userId }, data });
+  await prisma.task.updateMany({ where: { id, userId }, data });
   return NextResponse.json({ ok: true });
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  await prisma.task.deleteMany({ where: { id: params.id, userId } });
+  const { id } = await params;
+  await prisma.task.deleteMany({ where: { id, userId } });
   return NextResponse.json({ ok: true });
 }
