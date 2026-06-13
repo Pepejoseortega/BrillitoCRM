@@ -7,24 +7,39 @@ import { google } from "googleapis";
 //   GOOGLE_SHEET_ID             -> ID de la hoja (de la URL)
 //   GOOGLE_SHEET_TAB            -> (opcional) nombre de la pestaña, por defecto "Hoja 1"
 
-function getAuth() {
+// Obtiene las credenciales de la cuenta de servicio. Soporta dos formas:
+//  1) GOOGLE_SERVICE_ACCOUNT_JSON: el archivo JSON completo en base64 (recomendado)
+//  2) GOOGLE_SHEETS_CLIENT_EMAIL + GOOGLE_SHEETS_PRIVATE_KEY por separado
+export function getCredentials(): { clientEmail: string; privateKey: string } | null {
+  const b64 = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (b64) {
+    try {
+      const json = JSON.parse(Buffer.from(b64, "base64").toString("utf8"));
+      if (json.client_email && json.private_key) {
+        return { clientEmail: json.client_email, privateKey: json.private_key };
+      }
+    } catch {
+      return null;
+    }
+  }
   const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
   const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, "\n");
-  if (!clientEmail || !privateKey) return null;
+  if (clientEmail && privateKey) return { clientEmail, privateKey };
+  return null;
+}
 
+function getAuth() {
+  const creds = getCredentials();
+  if (!creds) return null;
   return new google.auth.JWT({
-    email: clientEmail,
-    key: privateKey,
+    email: creds.clientEmail,
+    key: creds.privateKey,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 }
 
 export function isSheetsConfigured() {
-  return Boolean(
-    process.env.GOOGLE_SHEETS_CLIENT_EMAIL &&
-    process.env.GOOGLE_SHEETS_PRIVATE_KEY &&
-    process.env.GOOGLE_SHEET_ID
-  );
+  return Boolean(getCredentials() && process.env.GOOGLE_SHEET_ID);
 }
 
 type ContactRow = {
