@@ -16,6 +16,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <Link href="/contacts" className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition text-sm font-medium">
           👥 Contactos
         </Link>
+        <Link href="/followups" className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition text-sm font-medium">
+          📅 Seguimientos
+        </Link>
         <Link href="/tasks" className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition text-sm font-medium">
           ✅ Tareas
         </Link>

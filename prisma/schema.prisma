@@ -79,14 +79,15 @@ model Contact {
 }
 
 model Task {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  dueDate     DateTime?
-  done        Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  contactId   String?
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  dueDate       DateTime?
+  done          Boolean   @default(false)
+  followUpStage Int?      // 1=Primer, 2=Segundo, 3=Tercer, 4=Cuarto seguimiento (null = tarea manual)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  contactId     String?
   contact     Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
   userId      String
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)

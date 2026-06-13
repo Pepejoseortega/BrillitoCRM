@@ -28,10 +28,10 @@ function parseContactInput(data: any) {
 
 // Seguimientos automáticos: días después de la fecha de primer contacto
 const FOLLOW_UPS = [
-  { title: "Primer seguimiento", days: 1 },   // 24 horas
-  { title: "Segundo seguimiento", days: 3 },  // 3 días
-  { title: "Tercer seguimiento", days: 7 },   // 1 semana
-  { title: "Cuarto seguimiento", days: 14 },  // 2 semanas
+  { stage: 1, title: "Primer seguimiento", days: 1 },   // 24 horas
+  { stage: 2, title: "Segundo seguimiento", days: 3 },  // 3 días
+  { stage: 3, title: "Tercer seguimiento", days: 7 },   // 1 semana
+  { stage: 4, title: "Cuarto seguimiento", days: 14 },  // 2 semanas
 ];
 
 function addDays(date: Date, days: number) {
@@ -52,6 +52,7 @@ export async function POST(req: Request) {
   await prisma.task.createMany({
     data: FOLLOW_UPS.map((f) => ({
       title: `${f.title} — ${contact.name}`,
+      followUpStage: f.stage,
       dueDate: addDays(base, f.days),
       contactId: contact.id,
       userId,
