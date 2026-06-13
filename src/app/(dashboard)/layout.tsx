@@ -7,6 +7,7 @@ import { LogoutButton } from "@/components/LogoutButton";
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
   if (!session) redirect("/auth/login");
+  const isAdmin = (session.user as any)?.role === "admin";
 
   return (
     <div className="min-h-screen flex bg-gray-50">
@@ -18,6 +19,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <Link href="/tasks" className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition text-sm font-medium">
           ✅ Tareas
         </Link>
+        {isAdmin && (
+          <Link href="/users" className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition text-sm font-medium">
+            ⚙️ Usuarios
+          </Link>
+        )}
         <div className="mt-auto">
           <p className="text-xs text-gray-400 px-2 mb-2">{session.user?.email}</p>
           <LogoutButton />

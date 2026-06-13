@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,11 +63,8 @@ export default function LoginPage() {
             {loading ? "Entrando..." : "Iniciar sesión"}
           </button>
         </form>
-        <p className="mt-4 text-sm text-center text-gray-500">
-          ¿No tienes cuenta?{" "}
-          <Link href="/auth/register" className="text-blue-600 hover:underline">
-            Regístrate
-          </Link>
+        <p className="mt-4 text-xs text-center text-gray-400">
+          ¿No tienes cuenta? Pide a un administrador que te cree una.
         </p>
       </div>
     </div>
